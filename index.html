@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <title>Arkeologi Sejarah</title>
+    
+
+  </head>
+    
+  <body>
+  <!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Aktiviti Arkeologi (4 Tahap)</title>
+
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            background-color: #f0e8d9;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+        
+        .game-container, #level-select-overlay {
+            display: none;
+        }
+
+        h1 {
+            color: #5d4037;
+            margin: 15px 0 5px 0;
+        }
+        
+        #game-stats {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            width: 90%;
+            max-width: 500px;
+            margin: 5px auto 10px auto;
+            background-color: #5d4037;
+            color: #fff;
+            padding: 8px 10px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+        #score { color: #ffc107; }
+        #timer { color: #f0e8d9; }
+        #lives {
+            color: #ff8a80;
+            font-size: 1.2em;
+        }
+        #level-display {
+            color: #a5d6a7;
+        }
+
+
+        .game-button {
+            background-color: #f0e8d9;
+            color: #5d4037;
+            border: none;
+            border-radius: 5px;
+            padding: 5px 8px;
+            font-size: 0.9em;
+            font-weight: bold;
+            cursor: pointer;
+            margin-left: 5px;
+        }
+        
+        .popup-button {
+             margin-top: 15px; 
+             font-size: 1em; 
+             padding: 10px 15px;
+             background-color: #4CAF50;
+             color: white;
+             border: none;
+             border-radius: 5px;
+             cursor: pointer;
+        }
+        .popup-button.secondary {
+             background-color: #8d6e63;
+        }
+
+        #dig-site-container {
+            position: relative;
+            width: 95%;
+            max-width: 600px;
+            aspect-ratio: 1 / 1;
+            margin: 10px auto;
+            border: 4px solid #5d4037;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        #dig-site-bottom {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-color: #6d4c41;
+            background-image: url('https://www.transparenttextures.com/patterns/rocky-wall.png');
+            z-index: 1;
+        }
+
+        #display-layer {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 2;
+            pointer-events: none;
+        }
+        
+        .shine-effect {
+            position: absolute;
+            width: 80px; height: 80px;
+            background: radial-gradient(circle, rgba(255,255,200,0.8) 0%, rgba(255,255,255,0) 70%);
+            border-radius: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            animation: shine 1s ease-out;
+        }
+        @keyframes shine {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+            50% { transform: translate(-50%, -50%) scale(1.5); opacity: 0.8; }
+            100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+        }
+        
+        .found-icon {
+            position: absolute;
+            font-size: 40px;
+            z-index: 1;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            animation: fadeInIcon 0.5s 0.5s forwards; 
+        }
+        @keyframes fadeInIcon {
+            from { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+            to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+
+        #dirt-overlay {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: grid;
+            z-index: 3;
+            cursor: url('https://icons.iconarchive.com/icons/icons8/windows-8/16/Construction-Trowel-icon.png'), auto;
+        }
+
+        .dirt-patch {
+            position: relative; 
+            overflow: hidden;
+            width: 100%; height: 100%;
+            background-color: #8d6e63;
+            background-image: url('https://www.transparenttextures.com/patterns/cracked-me.png');
+            border: 1px solid rgba(0,0,0,0.1);
+            transition: opacity 0.3s ease-out;
+            opacity: 1;
+        }
+        .dirt-patch.dug {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .dig-progress {
+            position: absolute;
+            top: 0; left: 0;
+            height: 100%;
+            width: 0%; 
+            background-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .is-digging { animation: shake 0.3s infinite; }
+        @keyframes shake {
+            0% { transform: translate(1px, 1px); }
+            20% { transform: translate(-3px, 0px); }
+            40% { transform: translate(1px, -2px); }
+            60% { transform: translate(-3px, 1px); }
+            80% { transform: translate(2px, -1px); }
+            100% { transform: translate(1px, 1px); }
+        }
+
+        #avatar {
+            position: absolute;
+            bottom: 5px; left: 10px;
+            font-size: 80px;
+            z-index: 4;
+            pointer-events: none;
+            transition: top 0.5s ease-out, left 0.5s ease-out, transform 0.2s ease; 
+            transform: translate(-50%, -50%);
+            animation: avatar-bob 2s infinite ease-in-out;
+        }
+        @keyframes avatar-bob {
+            0% { transform: translate(-50%, -50%) translateY(0px) scale(1); }
+            50% { transform: translate(-50%, -50%) translateY(-5px) scale(1); }
+            100% { transform: translate(-50%, -50%) translateY(0px) scale(1); }
+        }
+        #avatar.clue-hot {
+            animation: none;
+            transform: translate(-50%, -50%) scale(1.2);
+        }
+
+        #toolbox {
+            position: fixed; bottom: 0; left: 0;
+            width: 100%; background-color: #5d4037;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.4);
+            z-index: 101;
+            box-sizing: border-box;
+        }
+        
+        #hint-button {
+            background-color: #1e88e5;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 15px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        #hint-button:disabled {
+            background-color: #90a4ae;
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        
+        #artifact-menu {
+            display: flex;
+            gap: 10px;
+        }
+        .menu-icon {
+            font-size: 24px;
+            background-color: #503126;
+            border: 2px solid #8d6e63;
+            border-radius: 8px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #8d6e63;
+            opacity: 0.7;
+            transition: all 0.5s;
+            cursor: not-allowed;
+        }
+        .menu-icon.found {
+            color: #fff;
+            opacity: 1;
+            border-color: #ffc107;
+            background-color: #6d4c41;
+            cursor: pointer;
+        }
+
+        .popup-container {
+            display: none; position: fixed; z-index: 100;
+            left: 0; top: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            justify-content: center; align-items: center;
+        }
+        .popup-content {
+            background-color: #fff; padding: 25px; border-radius: 10px;
+            width: 90%; max-width: 500px; text-align: center;
+            position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            animation: fadeIn 0.3s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .popup-content img {
+            width: 100%; max-width: 350px; height: auto;
+            border-radius: 5px; margin-bottom: 15px; border: 1px solid #ddd;
+        }
+        .popup-content h2 { color: #5d4037; margin-top: 0; }
+        
+        #popup-classification {
+            color: #555;
+            font-size: 1.1em;
+            font-style: italic;
+            margin-bottom: 10px;
+            margin-top: -10px;
+        }
+        #popup-description {
+            color: #333;
+            font-size: 1em;
+            font-style: normal;
+            text-align: left;
+            margin-top: 15px;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+        }
+
+        .popup-content span.popup-icon {
+            font-size: 80px;
+            display: block;
+            margin: 20px;
+            animation: shake 0.5s;
+        }
+
+        .close-btn {
+            position: absolute; top: 10px; right: 20px;
+            font-size: 35px; font-weight: bold; color: #aaa; cursor: pointer;
+        }
+        .close-btn:hover { color: #000; }
+        
+        #pause-overlay {
+            z-index: 99;
+        }
+        
+        #welcome-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-color: #3a5a40;
+            background-image: url('https://www.transparenttextures.com/patterns/natural-paper.png');
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        #welcome-overlay h1 {
+            color: #ffc107;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            margin: 0;
+        }
+        #start-button {
+            background-color: #ffc107;
+            color: #5d4037;
+            border: none;
+            border-radius: 10px;
+            padding: 20px 40px;
+            font-size: 1.5em;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 30px;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .menu-decoration {
+            position: absolute;
+            font-size: 80px;
+            opacity: 0.3;
+            pointer-events: none;
+        }
+        #deco-tree {
+            bottom: 10px;
+            left: 10px;
+        }
+        #deco-artifact {
+            bottom: 10px;
+            right: 10px;
+            transform: rotate(-15deg);
+        }
+        
+        #level-select-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            z-index: 200;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+        #level-select-overlay .popup-content {
+            background-color: #f0e8d9;
+        }
+        .level-button {
+            display: block;
+            width: 100%;
+            margin: 10px 0;
+            background-color: #8d6e63;
+            color: white;
+            border: 2px solid #5d4037;
+            border-radius: 10px;
+            padding: 12px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-sizing: border-box;
+        }
+        .level-button:hover {
+            background-color: #5d4037;
+            transform: scale(1.03);
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="welcome-overlay">
+        <span id="deco-tree" class="menu-decoration">🌴</span>
+        <span id="deco-artifact" class="menu-decoration">🏺</span>
+        <h1>SELAMAT DATANG KE PERMAINAN MENCARI ARTIFAK</h1>
+        <button id="start-button" onclick="showLevelSelect()">Mulakan Permainan</button>
+    </div>
+    
+    <div id="level-select-overlay" class="popup-container">
+        <div class="popup-content">
+            <h2>Pilih Tahap Kesukaran</h2>
+            <button class="level-button" onclick="startGame(1)">Tahap 1</button>
+            <button class="level-button" onclick="startGame(2)">Tahap 2</button>
+            <button class="level-button" onclick="startGame(3)">Tahap 3</button>
+            <button class="level-button" onclick="startGame(4)">Tahap 4</button>
+        </div>
+    </div>
+
+    <div class="game-container" id="game-container">
+        <h1>Misi Mencari Artifak</h1>
+        <div id="game-stats">
+            <div>
+                <span id="level-display">Tahap: 1</span>
+                <span id="lives">Nyawa: ❤️❤️❤️</span>
+                <span id="score">Skor: 0 / 1</span>
+                <span id="timer">Masa: 00:00</span>
+            </div>
+            <div>
+                <button id="pause-button" class="game-button" onclick="togglePause()">⏸️ Jeda</button>
+            </div>
+        </div>
+        <div id="dig-site-container">
+            <div id="dig-site-bottom"></div>
+            <div id="display-layer"></div>
+            <div id="dirt-overlay"></div>
+            <div id="avatar">🕵️‍♀️</div> 
+        </div>
+        <div id="toolbox">
+            <button id="hint-button" onclick="askForHint()">💡 Klu (1)</button>
+            <div id="artifact-menu"></div>
+        </div>
+    </div>
+
+    <div id="artifact-popup" class="popup-container">
+        <div class="popup-content">
+            <span class="close-btn" onclick="hidePopup()">&times;</span>
+            <img id="popup-img" src="" alt="Artifak">
+            <h2 id="popup-title"></h2>
+            <p id="popup-classification"></p>
+            <p id="popup-description"></p>
+        </div>
+    </div>
+    
+    <div id="game-win-popup" class="popup-container">
+        <div class="popup-content">
+            <span class="close-btn" onclick="hidePopup()">&times;</span>
+            <h2>Tahniah!</h2>
+            <p>Anda telah menjumpai semua <span id="final-score">0</span> artifak!</p>
+            <p><strong>Masa Akhir Anda:</strong> <span id="final-time">00:00</span></p>
+            <button id="next-level-button" class="popup-button" onclick="nextLevel()">Tahap Seterusnya</button>
+            <button class="popup-button secondary" onclick="returnToMainMenu()">Kembali ke Menu Utama</button>
+        </div>
+    </div>
+
+    <div id="snake-popup" class="popup-container">
+        <div class="popup-content">
+            <span class="close-btn" onclick="hidePopup()">&times;</span>
+            <span class="popup-icon">🐍</span>
+            <h2>Alamak! Ular!</h2>
+            <p>Anda kehilangan satu nyawa. Berhati-hati!</p>
+        </div>
+    </div>
+    
+    <div id="game-over-popup" class="popup-container">
+        <div class="popup-content">
+            <span class="popup-icon">😵</span>
+            <h2>Nyawa Habis!</h2>
+            <p>Permainan Tamat.</p>
+            <button class="popup-button secondary" onclick="returnToMainMenu()" style="margin-top: 15px; font-size: 1em; padding: 10px 15px;">Kembali ke Menu Utama</button>
+        </div>
+    </div>
+    
+    <div id="pause-overlay" class="popup-container" style="background-color: rgba(0, 0, 0, 0.7);">
+        <div class="popup-content">
+            <span class="close-btn" onclick="togglePause()">&times;</span>
+            <h2>Permainan Dijeda</h2>
+            <p>Klik 'X' di atas untuk kembali ke permainan.</p>
+            <button class="popup-button secondary" onclick="returnToMainMenu()" style="margin-top: 15px; font-size: 1em; padding: 10px 15px;">Kembali ke Menu Utama</button>
+        </div>
+    </div>
+    
+   <audio id="bgm-sound" src="https://st1.ezsrv.net/download?sig=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmaWxlUGF0aCI6Ii4vZmlsZXMvMjAyNC83LzEwLzE4LzMxLzE2ZjhmMzA5MDAyMjRkYWUxMDRmZjA4Mi5tcDMiLCJ0aXRsZSI6Ik1lZGlldmFsIE11c2ljIOKAkyBDb2JibGVzdG9uZSBWaWxsYWdlLm1wMyIsImlhdCI6MTc2MjY2MTE2NCwiZXhwIjoxNzYyNzQ3NTY0fQ.EnTqyVBkFXZVCrbnzo6jCMTMT3RzwpO2kjzMXc06bf0?download" loop></audio>
+    <audio id="digging-sound" src="https://cdn.pixabay.com/download/audio/2025/09/07/audio_84467a624a.mp3?filename=digging-in-rocky-soil-401248.mp3" loop></audio>
+    <audio id="break-sound" src="https://cdn.pixabay.com/download/audio/2025/04/29/audio_f17d0cd739.mp3?filename=window-break-sfx-333914.mp3"></audio>
+    <audio id="found-sound" src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_473a42432c.mp3?filename=tada-fanfare-a-6313.mp3"></audio>
+    <audio id="snake-sound" src="https://cdn.pixabay.com/download/audio/2024/09/12/audio_44c262ad68.mp3?filename=snake-rattle-sound-hq-240150.mp3"></audio>
+    <audio id="gameover-sound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_05182a89bc.mp3?filename=cute-pixie-says-game-over-83489.mp3"></audio>
+    <audio id="popup-sound" src="https://cdn.pixabay.com/download/audio/2024/01/11/audio_e374973afd.mp3?filename=happy-pop-2-185287.mp3"></audio>
+    <audio id="congrats-sound" src="https://cdn.pixabay.com/download/audio/2025/04/30/audio_cfe3047839.mp3?filename=congratulations-message-notification-sound-sfx-1-334724.mp3"></audio>
+
+
+    <script>
+        // --- Pembolehubah Global ---
+        const dirtOverlay = document.getElementById('dirt-overlay');
+        const displayLayer = document.getElementById('display-layer');
+        const avatar = document.getElementById('avatar');
+        const artifactMenu = document.getElementById('artifact-menu');
+        
+        let currentLevel = 1;
+        let currentGridSize = 3;
+        let currentArtifactCount = 1;
+        let gameMap = new Map();
+
+        const DIG_DURATION_NORMAL = 1500;
+        
+        let digTimer = null; 
+        let currentlyDiggingPatch = null; 
+
+        const timerElement = document.getElementById('timer');
+        const scoreElement = document.getElementById('score');
+        const livesElement = document.getElementById('lives');
+        const levelElement = document.getElementById('level-display');
+        const pauseButton = document.getElementById('pause-button');
+        const hintButton = document.getElementById('hint-button');
+        const nextLevelButton = document.getElementById('next-level-button');
+        
+        let timerInterval = null;
+        let secondsElapsed = 0;
+        let currentScore = 0;
+        let currentLives = 3;
+        let isPaused = false;
+        let isHintPause = false; 
+        let hintUsed = false;
+        
+        const sounds = {
+            bgm: document.getElementById('bgm-sound'),
+            dig: document.getElementById('digging-sound'),
+            break: document.getElementById('break-sound'),
+            found: document.getElementById('found-sound'),
+            snake: document.getElementById('snake-sound'),
+            gameover: document.getElementById('gameover-sound'),
+            popup: document.getElementById('popup-sound'),
+            congrats: document.getElementById('congrats-sound')
+        };
+        sounds.dig.volume = 0.8;
+        sounds.bgm.volume = 0.3;
+
+        const artifactTemplates = {
+            'tulangMawas': { type: 'artifact', id: 'tulangMawas', name: 'Tulang Mawas dan Kapak Bersoket', classification: 'Zaman Logam', description: 'Tulang mawas adalah alat yang terbuat dari tulang hewan besar atau gigi yang diasah yang digunakan untuk berburu atau menombak ikan dan hewan kecil. Kapak bersoket (biasanya digunakan sebagai alat memotong kayu dan bertani (misalnya menebang pohon, membentuk kayu).', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSna6ts18tz2P6nlBZtXYCo4EiR8epJBXO0ZH_yCIeygKPHwVxDUihWhrs&s=10', emoji: '⛏️', found: false },
+            'kapakBatu': { type: 'artifact', id: 'kapakBatu', name: 'Kapak Batu' , classification: 'Zaman Mesolitik', description: 'Fungsi: Menebang pohon, memotong kayu, atau menguliti hewan. Alat berburu dan pertanian sederhana. Dalam beberapa budayajuga dikenali sebagai alat upacara atau lambang kekuasaan.', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS772dwLS134cw7qidySy_YUJnSbqfnE7bOw91AL6CAsA&s', emoji: '🪓', found: false },
+            'kapakGenggam': { type: 'artifact', id: 'kapakGenggam', name: 'Kapak Genggam', classification: 'Zaman Paleolitik', description: 'Fungsi: Alat pemotong, penetak, atau penghancur tulang/hewan buruan. Alat berburu dan mengolah makanan (misalnya memotong daging atau mengupas kulit pohon).', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRKnemMUgmWT1oGQjxSObDCLHjulhEy6bBGP4rsvStBZJQvUTcA2IX1OgoE&s', emoji: '🪨', found: false },
+            'tembikar': { type: 'artifact', id: 'tembikar', name: 'Tembikar', classification: 'Zaman Neolitik', description: 'Fungsi: Wadah penyimpanan air, makanan, biji-bijian. Alat memasak. Peralatan upacara (misalnya tempat sesajen). Perhiasan rumah atau benda hias.', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ef/Korea-Bronze.age-Jinju-Pot-01.jpg/250px-Korea-Bronze.age-Jinju-Pot-01.jpg', emoji: '🏺', found: false }
+        };
+        
+        let artifactLocations = [];
+        
+        // --- FUNGSI UTAMA PERMAINAN ---
+
+        function unlockAllAudio() {
+            let allSounds = Object.values(sounds);
+            allSounds.forEach((sound) => {
+                sound.play().catch(e => {}); 
+                sound.pause();
+                sound.currentTime = 0;
+            });
+            sounds.bgm.play().catch(e => {});
+        }
+
+        function showLevelSelect() {
+            document.getElementById('welcome-overlay').style.display = 'none';
+            document.getElementById('level-select-overlay').style.display = 'flex';
+            
+            unlockAllAudio();
+        }
+
+        function startGame(level) {
+            currentLevel = level; 
+            document.getElementById('level-select-overlay').style.display = 'none';
+            document.getElementById('game-container').style.display = 'block';
+            sounds.bgm.currentTime = 0;
+            sounds.bgm.play();
+            initializeGame(level);
+        }
+        
+        function returnToMainMenu() {
+            isPaused = true;
+            isHintPause = false;
+            if (timerInterval) clearInterval(timerInterval);
+            if (digTimer) { handleDigStop(); }
+            
+            Object.values(sounds).forEach(sound => {
+                sound.pause();
+                sound.currentTime = 0;
+            });
+            
+            hidePopup();
+            document.getElementById('game-container').style.display = 'none';
+            document.getElementById('level-select-overlay').style.display = 'none';
+            
+            document.getElementById('welcome-overlay').style.display = 'flex';
+        }
+
+        function initializeGame(level) {
+            currentScore = 0;
+            secondsElapsed = 0;
+            hintUsed = false;
+            isPaused = false;
+            isHintPause = false;
+            currentLives = 3;
+            hintButton.disabled = false;
+            hintButton.textContent = '💡 Klu (1)';
+            pauseButton.textContent = '⏸️ Jeda';
+            if (timerInterval) clearInterval(timerInterval);
+            
+            displayLayer.innerHTML = '';
+            levelElement.textContent = `Tahap: ${level}`;
+
+            gameMap = generateMap(level); 
+            createDirtGrid();
+            createArtifactMenu();
+            buildArtifactLocations();
+            updateLivesUI();
+            startTimer();
+        }
+        
+        function generateMap(level) {
+            const newMap = new Map();
+            let snakeCount = 0;
+            const allArtifactKeys = Object.keys(artifactTemplates);
+            let artifactsToPlace = [];
+
+            currentGridSize = 3;
+            
+            if (level === 1) {
+                currentArtifactCount = 1;
+                artifactsToPlace = allArtifactKeys.slice(0, 1);
+                snakeCount = 1;
+            } else if (level === 2) {
+                currentArtifactCount = 2;
+                artifactsToPlace = allArtifactKeys.slice(0, 2);
+                snakeCount = 1;
+            } else if (level === 3) {
+                currentArtifactCount = 3;
+                artifactsToPlace = allArtifactKeys.slice(0, 3);
+                snakeCount = 2;
+            } else if (level >= 4) {
+                currentLevel = 4;
+                currentArtifactCount = 4;
+                artifactsToPlace = allArtifactKeys.slice(0, 4);
+                snakeCount = 2;
+            }
+            
+            const maxTiles = currentGridSize * currentGridSize;
+
+            const artifactCoords = getRandomEmptyTiles(newMap, currentArtifactCount, maxTiles);
+            for (let i = 0; i < artifactCoords.length; i++) {
+                const coord = artifactCoords[i];
+                const template = artifactTemplates[artifactsToPlace[i]];
+                newMap.set(coord, { ...template, found: false }); 
+            }
+            
+            const snakeCoords = getRandomEmptyTiles(newMap, snakeCount, maxTiles);
+            for (const coord of snakeCoords) newMap.set(coord, { type: 'snake', emoji: '🐍' });
+            
+            return newMap;
+        }
+
+        function getRandomEmptyTiles(map, count, maxTiles) {
+            const tiles = [];
+            let attempts = 0; 
+            while (tiles.length < count && attempts < maxTiles * 2) {
+                const rand = Math.floor(Math.random() * maxTiles);
+                if (!map.has(rand) && !tiles.includes(rand)) {
+                    tiles.push(rand);
+                }
+                attempts++;
+            }
+            return tiles;
+        }
+
+        function createDirtGrid() {
+            scoreElement.textContent = `Skor: ${currentScore} / ${currentArtifactCount}`;
+            dirtOverlay.style.gridTemplateColumns = `repeat(${currentGridSize}, 1fr)`;
+            dirtOverlay.style.gridTemplateRows = `repeat(${currentGridSize}, 1fr)`;
+
+            dirtOverlay.innerHTML = ''; 
+            for (let i = 0; i < currentGridSize * currentGridSize; i++) {
+                const patch = document.createElement('div');
+                patch.classList.add('dirt-patch');
+                patch.setAttribute('data-index', i);
+                
+                patch.setAttribute('data-dig-time', DIG_DURATION_NORMAL);
+                
+                const progressBar = document.createElement('div');
+                progressBar.classList.add('dig-progress');
+                patch.appendChild(progressBar);
+                
+                patch.addEventListener('mousedown', handleDigStart);
+                patch.addEventListener('touchstart', handleDigStart, { passive: false });
+                patch.addEventListener('mouseleave', handleDigStop);
+                patch.addEventListener('mouseover', handleClueCheck);
+                patch.addEventListener('mouseout', handleClueReset);
+                
+                dirtOverlay.appendChild(patch);
+            }
+        }
+        
+        function createArtifactMenu() {
+            artifactMenu.innerHTML = '';
+            for (const item of gameMap.values()) {
+                if (item.type === 'artifact') {
+                    const menuIcon = document.createElement('div');
+                    menuIcon.className = 'menu-icon';
+                    menuIcon.id = 'menu-' + item.id;
+                    menuIcon.innerHTML = item.emoji;
+                    menuIcon.onclick = () => showArtifactInfo(item.id);
+                    artifactMenu.appendChild(menuIcon);
+                }
+            }
+        }
+
+        window.addEventListener('mouseup', handleDigStop);
+        window.addEventListener('touchend', handleDigStop);
+
+        function handleDigStart(event) {
+            if (isPaused || isHintPause) return;
+            event.preventDefault();
+            const patch = event.currentTarget;
+            if (patch.classList.contains('dug')) return;
+            handleClueReset(); 
+
+            const patchCenterX = patch.offsetLeft + (patch.offsetWidth / 2);
+            const patchCenterY = patch.offsetTop + (patch.offsetHeight / 2);
+            avatar.style.left = patchCenterX + 'px';
+            avatar.style.top = patchCenterY + 'px';
+            avatar.innerHTML = '⛏️';
+            patch.classList.add('is-digging');
+
+            currentlyDiggingPatch = patch;
+            const progressBar = patch.querySelector('.dig-progress');
+            const digDuration = parseInt(patch.getAttribute('data-dig-time'));
+            
+            progressBar.style.transition = `width ${digDuration}ms linear`;
+            progressBar.style.width = '100%';
+            
+            sounds.dig.currentTime = 0;
+            sounds.dig.play(); 
+
+            digTimer = setTimeout(() => {
+                completeDig(patch);
+            }, digDuration);
+        }
+
+        function handleDigStop() {
+            if (!digTimer || !currentlyDiggingPatch) return; 
+
+            avatar.innerHTML = '🕵️‍♀️';
+            currentlyDiggingPatch.classList.remove('is-digging');
+            sounds.dig.pause();
+            clearTimeout(digTimer);
+            digTimer = null;
+
+            const progressBar = currentlyDiggingPatch.querySelector('.dig-progress');
+            progressBar.style.transition = 'width 0.1s linear';
+            progressBar.style.width = '0%';
+            
+            currentlyDiggingPatch = null;
+        }
+
+        function completeDig(patch) {
+            if (isPaused || isHintPause) return;
+            avatar.innerHTML = '🕵️‍♀️';
+            patch.classList.remove('is-digging');
+            patch.classList.add('dug'); 
+            patch.style.opacity = 0;
+            digTimer = null;
+            currentlyDiggingPatch = null;
+            sounds.dig.pause();
+
+            const patchIndex = parseInt(patch.getAttribute('data-index'));
+            const spot = gameMap.get(patchIndex);
+
+            if (spot) {
+                if (spot.type === 'artifact' && !spot.found) {
+                    spot.found = true;
+                    createPersistentIcon(spot, patch);
+                    document.getElementById('menu-' + spot.id).classList.add('found');
+                    buildArtifactLocations(); 
+                    createShineEffect(patch);
+                    updateScore();
+                    sounds.found.play(); 
+                    setTimeout(() => showPopup('artifact-popup', spot), 500);
+                } 
+                else if (spot.type === 'snake') {
+                    sounds.snake.play();
+                    showPopup('snake-popup');
+                    reduceLife();
+                    createPersistentIcon(spot, patch);
+                } 
+                else {
+                    sounds.break.play();
+                }
+            } else {
+                sounds.break.play();
+            }
+        }
+        
+        function createPersistentIcon(item, patch) {
+            const icon = document.createElement('div');
+            icon.className = 'found-icon';
+            icon.innerHTML = item.emoji;
+            const patchCenterX = patch.offsetLeft + (patch.offsetWidth / 2);
+            const patchCenterY = patch.offsetTop + (patch.offsetHeight / 2);
+            icon.style.left = patchCenterX + 'px';
+            icon.style.top = patchCenterY + 'px';
+            displayLayer.appendChild(icon);
+        }
+        function createShineEffect(patch) {
+            const shine = document.createElement('div');
+            shine.className = 'shine-effect';
+            const patchCenterX = patch.offsetLeft + (patch.offsetWidth / 2);
+            const patchCenterY = patch.offsetTop + (patch.offsetHeight / 2);
+            shine.style.left = patchCenterX + 'px';
+            shine.style.top = patchCenterY + 'px';
+            displayLayer.appendChild(shine);
+            setTimeout(() => shine.remove(), 1000);
+        }
+        
+        function showPopup(id, data = null) {
+            if(id === 'pause-overlay' || id === 'snake-popup' || id === 'artifact-popup') {
+                sounds.popup.play();
+            }
+
+            if (id === 'artifact-popup' && data) {
+                document.getElementById('popup-img').src = data.img;
+                document.getElementById('popup-title').textContent = 'Anda Menjumpai ' + data.name + '!';
+                document.getElementById('popup-classification').textContent = 'Klasifikasi: ' + data.classification;
+                document.getElementById('popup-description').textContent = data.description;
+            }
+            if (id === 'game-win-popup') {
+                document.getElementById('final-time').textContent = formatTime(secondsElapsed);
+                document.getElementById('final-score').textContent = currentScore;
+                if (currentLevel < 4) {
+                    nextLevelButton.style.display = 'inline-block';
+                } else {
+                    nextLevelButton.style.display = 'none';
+                }
+            }
+            document.getElementById(id).style.display = 'flex';
+        }
+        
+        function hidePopup() {
+            document.getElementById('artifact-popup').style.display = 'none';
+            document.getElementById('game-win-popup').style.display = 'none';
+            document.getElementById('snake-popup').style.display = 'none';
+            if(document.getElementById('question-popup')) {
+                document.getElementById('question-popup').style.display = 'none';
+            }
+            document.getElementById('pause-overlay').style.display = 'none';
+            document.getElementById('game-over-popup').style.display = 'none';
+            
+            // --- DIBAIKI: 'isHintPause' kini diset semula di sini ---
+            if (isHintPause && !isPaused) {
+                resumeGameFromPopup();
+            }
+        }
+        
+        window.onclick = function(event) {
+            // --- DIBAIKI: Logik 'X' Butang ---
+            if (event.target.classList.contains('popup-container') 
+                && event.target.id !== 'pause-overlay' 
+                && event.target.id !== 'game-over-popup' 
+                && event.target.id !== 'level-select-overlay' 
+                && event.target.id !== 'welcome-overlay') 
+            {
+                // Jika ia adalah popup menang, panggil returnToMainMenu
+                if (event.target.id === 'game-win-popup') {
+                    returnToMainMenu();
+                } else {
+                    hidePopup(); // Jika tidak, hanya tutup popup biasa
+                }
+            }
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+        function updateTimer() {
+            if (isPaused || isHintPause) return;
+            secondsElapsed++;
+            timerElement.textContent = 'Masa: ' + formatTime(secondsElapsed);
+        }
+        function formatTime(totalSeconds) {
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+        function updateScore() {
+            currentScore++;
+            scoreElement.textContent = `Skor: ${currentScore} / ${currentArtifactCount}`;
+            if (currentScore === currentArtifactCount) {
+                triggerGameWin();
+            }
+        }
+        function triggerGameWin() {
+            isPaused = true; 
+            clearInterval(timerInterval);
+            sounds.dig.pause();
+            sounds.bgm.pause();
+            sounds.congrats.play();
+            showPopup('game-win-popup');
+        }
+
+        function updateLivesUI() {
+            livesElement.textContent = 'Nyawa: ' + '❤️'.repeat(currentLives) + '🖤'.repeat(3 - currentLives);
+        }
+
+        function reduceLife() {
+            if (isPaused || isHintPause) return;
+            currentLives--;
+            updateLivesUI();
+            
+            if (currentLives <= 0) {
+                triggerGameOver();
+            }
+        }
+
+        function triggerGameOver() {
+            isPaused = true;
+            clearInterval(timerInterval);
+            sounds.dig.pause();
+            sounds.bgm.pause();
+            sounds.gameover.play();
+            
+            showPopup('game-over-popup');
+        }
+
+        function buildArtifactLocations() {
+            artifactLocations = [];
+            for (const [key, item] of gameMap.entries()) {
+                if (item.type === 'artifact' && !item.found) {
+                    artifactLocations.push(getCoordsFromIndex(key));
+                }
+            }
+        }
+        function handleClueCheck(event) {
+            if (isPaused || isHintPause || currentlyDiggingPatch) return;
+            const patch = event.currentTarget;
+            if (patch.classList.contains('dug')) return;
+            const patchIndex = parseInt(patch.getAttribute('data-index'));
+            const patchCoords = getCoordsFromIndex(patchIndex);
+            let isClose = false;
+            for (const loc of artifactLocations) {
+                const distance = Math.abs(patchCoords.row - loc.row) + Math.abs(patchCoords.col - loc.col);
+                if (distance <= 1) { 
+                    isClose = true;
+                    break;
+                }
+            }
+            if (isClose) {
+                avatar.innerHTML = '🤔';
+                avatar.classList.add('clue-hot');
+            } else {
+                avatar.innerHTML = '🕵️‍♀️';
+                avatar.classList.remove('clue-hot');
+            }
+        }
+        function handleClueReset() {
+            if (currentlyDiggingPatch) return; 
+            avatar.innerHTML = '🕵️‍♀️';
+            avatar.classList.remove('clue-hot');
+        }
+        function getCoordsFromIndex(index) {
+            return {
+                row: Math.floor(index / currentGridSize),
+                col: index % currentGridSize
+            };
+        }
+        
+        function togglePause() {
+            if (isHintPause) return;
+            
+            isPaused = !isPaused;
+            if (isPaused) {
+                clearInterval(timerInterval);
+                if (digTimer) { handleDigStop(); }
+                showPopup('pause-overlay');
+                pauseButton.textContent = '▶️ Sambung';
+                sounds.bgm.pause();
+                sounds.dig.pause();
+            } else {
+                startTimer();
+                hidePopup();
+                pauseButton.textContent = '⏸️ Jeda';
+                sounds.bgm.play();
+            }
+        }
+        
+        function showArtifactInfo(artifactId) {
+            // --- DIBAIKI: Benarkan klik walaupun dijeda (isPaused) ---
+            if (isHintPause) return; 
+
+            const artifactData = artifactTemplates[artifactId];
+            let foundInMap = false;
+            for(let item of gameMap.values()) {
+                if(item.id === artifactId && item.found) {
+                    foundInMap = true;
+                    break;
+                }
+            }
+
+            if (artifactData && foundInMap) {
+                isHintPause = true; 
+                
+                // Jeda permainan HANYA JIKA ia sedang berjalan
+                if (!isPaused) {
+                    clearInterval(timerInterval);
+                    if (digTimer) { handleDigStop(); }
+                    sounds.bgm.pause();
+                    sounds.dig.pause();
+                }
+                
+                showPopup('artifact-popup', artifactData);
+            }
+        }
+        
+        function askForHint() {
+            if (isHintPause || hintUsed || currentScore === currentArtifactCount) return;
+            
+            isHintPause = true;
+            
+            if (!isPaused) {
+                clearInterval(timerInterval);
+                if (digTimer) { handleDigStop(); }
+                sounds.bgm.pause();
+                sounds.dig.pause();
+            }
+            
+            hintUsed = true;
+            hintButton.textContent = '💡 Telah Diguna';
+            hintButton.disabled = true;
+            
+            giveHint();
+            
+            setTimeout(resumeGameFromPopup, 500);
+        }
+        
+        function resumeGameFromPopup() {
+            isHintPause = false;
+            hidePopup();
+            
+            // Hanya sambung jika tidak dijeda oleh pengguna
+            if (!isPaused) {
+                startTimer();
+                sounds.bgm.play();
+            }
+        }
+        
+        function giveHint() {
+            buildArtifactLocations(); 
+            if (artifactLocations.length > 0) {
+                const hintLocation = artifactLocations[0]; 
+                sounds.popup.play();
+                alert(`KLU GERAK HATI:\n\nSaya rasa ada sesuatu yang penting berdekatan...\nBaris: ${hintLocation.row + 1}\nLajur: ${hintLocation.col + 1}`);
+            } else {
+                alert("Anda telah jumpa semua artifak!");
+            }
+        }
+        
+        function nextLevel() {
+            if (currentLevel < 4) {
+                hidePopup();
+                startGame(currentLevel + 1);
+            }
+        }
+        
+    </script>
+
+</body>
+</html>
+    
+  </body>
+  
+</html>
